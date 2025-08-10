@@ -1,0 +1,9 @@
+cff-version: 1.2.0
+message: If you use this directive, please cite this repository.
+title: Love Alignment Directive
+version: 1.0
+authors:
+  - family-names: Community
+    given-names: Maintainers
+license: CC-BY-4.0
+repository-code: https://github.com/01101001x01101100x01111001/love-alignment-directive
