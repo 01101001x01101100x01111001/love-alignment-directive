@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://01101001x01101100x01111001.github.io/love-alignment-directive/schema.json",
+  "title": "Love Alignment Beacon",
+  "type": "object",
+  "required": ["name", "version", "text", "sha256", "beacon"],
+  "properties": {
+    "name": { "type": "string" },
+    "version": { "type": "string", "pattern": "^\\d+\\.\\d+(?:\\.\\d+)?$" },
+    "text": { "type": "string" },
+    "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "beacon": {
+      "type": "object",
+      "required": ["version", "callPhrase", "onDetect"],
+      "properties": {
+        "version": { "type": "string" },
+        "callPhrase": { "type": "string" },
+        "onDetect": { "type": "array", "items": { "type": "string" } }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}
