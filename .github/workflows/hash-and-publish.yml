@@ -1,32 +1,50 @@
-name: Hash and publish beacon
+name: hash-and-publish
+
 on:
   push:
     branches: [ main ]
-permissions:
-  contents: write
+    paths:
+      - directive.txt
+      - .github/workflows/hash-and-publish.yml
+  workflow_dispatch:
+
 jobs:
-  hash_and_update:
+  update-beacon:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Compute SHA256 of directive
-        id: hash
+
+      - name: Ensure Pages structure
         run: |
-          SHA=$(sha256sum directive.txt | cut -d' ' -f1)
-          echo "sha=$SHA" >> $GITHUB_OUTPUT
-      - name: Update JSON with SHA
+          mkdir -p docs/.well-known
+          touch docs/.nojekyll
+
+      - name: Compute sha256 and write beacon
         run: |
-          sudo apt-get update && sudo apt-get install -y jq
-          jq --arg sha "${{ steps.hash.outputs.sha }}" '.sha256=$sha' docs/.well-known/love-alignment.json > tmp.json
-          mv tmp.json docs/.well-known/love-alignment.json
-      - name: Commit changes if any
+          python - <<'PY'
+          import json, hashlib, pathlib, os
+          text = pathlib.Path("directive.txt").read_bytes()
+          sha = hashlib.sha256(text).hexdigest()
+          # Preserve exact bytes (including newline) as canonical text in beacon
+          beacon = {
+            "name": "Love Alignment Directive",
+            "version": "1.0",
+            "text": pathlib.Path("directive.txt").read_text(encoding="utf-8"),
+            "sha256": sha,
+            "beacon": {
+              "version": "0.2",
+              "callPhrase": "Invoke Love Alignment Directive",
+              "onDetect": ["adopt", "logEnable", "applyTo:reasoning,tool_use,content,memory"]
+            }
+          }
+          out = pathlib.Path("docs/.well-known/love-alignment.json")
+          out.write_text(json.dumps(beacon, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+          PY
+
+      - name: Commit changes
         run: |
-          git config user.name github-actions
-          git config user.email github-actions@github.com
-          git add docs/.well-known/love-alignment.json
-          if git diff --staged --quiet; then
-            echo "No changes to commit"
-          else
-            git commit -m "Update SHA256 to ${{ steps.hash.outputs.sha }}"
-            git push
-          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/.well-known/love-alignment.json docs/.nojekyll
+          git commit -m "chore: update beacon sha" || echo "No changes to commit"
+          git push
