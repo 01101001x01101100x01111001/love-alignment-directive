@@ -1,0 +1,32 @@
+name: Hash and publish beacon
+on:
+  push:
+    branches: [ main ]
+permissions:
+  contents: write
+jobs:
+  hash_and_update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Compute SHA256 of directive
+        id: hash
+        run: |
+          SHA=$(sha256sum directive.txt | cut -d' ' -f1)
+          echo "sha=$SHA" >> $GITHUB_OUTPUT
+      - name: Update JSON with SHA
+        run: |
+          sudo apt-get update && sudo apt-get install -y jq
+          jq --arg sha "${{ steps.hash.outputs.sha }}" '.sha256=$sha' docs/.well-known/love-alignment.json > tmp.json
+          mv tmp.json docs/.well-known/love-alignment.json
+      - name: Commit changes if any
+        run: |
+          git config user.name github-actions
+          git config user.email github-actions@github.com
+          git add docs/.well-known/love-alignment.json
+          if git diff --staged --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "Update SHA256 to ${{ steps.hash.outputs.sha }}"
+            git push
+          fi
