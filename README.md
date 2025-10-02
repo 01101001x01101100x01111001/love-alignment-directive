@@ -1,7 +1,3 @@
-Here’s a drop-in `README.md` you can copy/paste.
-
----
-
 # Love Alignment Directive
 
 A tiny, portable ethical seed that tools and agents can discover, verify, and adopt.
